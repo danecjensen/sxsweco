@@ -18,43 +18,28 @@ from flask_cache import Cache
 from application import app
 from decorators import login_required, admin_required
 from forms import ExampleForm
-from models import ExampleModel
+from models import Sign
 
 
 # Flask-Cache (configured to use App Engine Memcache API)
 cache = Cache(app)
 
 
-def home():
-    return redirect(url_for('list_examples'))
+def index():
+    return redirect(url_for('list_homes'))
 
+def list_homes():
+    """List all homes"""
+    return render_template('list_homes.html')
 
-def say_hello(username):
-    """Contrived example to demonstrate Flask's url routing capabilities"""
-    return 'Hello %s' % username
+def show_home(home_id, date):
+    s = Sign.all().filter('home =',home_id).filter("date =", date).get()
+    return render_template('home.html', home_id=home_id, date=date, sign=s) 
 
-
-@login_required
-def list_examples():
-    """List all examples"""
-    examples = ExampleModel.query()
-    form = ExampleForm()
-    if form.validate_on_submit():
-        example = ExampleModel(
-            example_name=form.example_name.data,
-            example_description=form.example_description.data,
-            added_by=users.get_current_user()
-        )
-        try:
-            example.put()
-            example_id = example.key.id()
-            flash(u'Example %s successfully saved.' % example_id, 'success')
-            return redirect(url_for('list_examples'))
-        except CapabilityDisabledError:
-            flash(u'App Engine Datastore is currently in read-only mode.', 'info')
-            return redirect(url_for('list_examples'))
-    return render_template('list_examples.html', examples=examples, form=form)
-
+def show_graph(home_id, date):
+    atype = request.args.get('type')
+    maxy = request.args.get('max')
+    return render_template('graph2.html', maxy=maxy, atype=atype) 
 
 @login_required
 def edit_example(example_id):
@@ -68,19 +53,6 @@ def edit_example(example_id):
             flash(u'Example %s successfully saved.' % example_id, 'success')
             return redirect(url_for('list_examples'))
     return render_template('edit_example.html', example=example, form=form)
-
-
-@login_required
-def delete_example(example_id):
-    """Delete an example object"""
-    example = ExampleModel.get_by_id(example_id)
-    try:
-        example.key.delete()
-        flash(u'Example %s successfully deleted.' % example_id, 'success')
-        return redirect(url_for('list_examples'))
-    except CapabilityDisabledError:
-        flash(u'App Engine Datastore is currently in read-only mode.', 'info')
-        return redirect(url_for('list_examples'))
 
 
 @admin_required
