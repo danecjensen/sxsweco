@@ -39,7 +39,8 @@ def show_home(home_id, date):
 def show_graph(home_id, date):
     atype = request.args.get('type')
     maxy = request.args.get('max')
-    return render_template('graph2.html', maxy=maxy, atype=atype) 
+    device = request.args.get('device')
+    return render_template('graph2.html', home_id=home_id, date=date, maxy=maxy, atype=atype, device=device) 
 
 @login_required
 def edit_example(example_id):
